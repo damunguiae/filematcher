@@ -46,15 +46,38 @@ def execute_load(pdf_texts, embeddings):
         print(f"Added {len(new_ids)} new embeddings to database")
     else:
         print("No new embeddings to add")
-    # Create query embedding
-    query_embedding = model.encode("CPB Software (Germany) GmbH - Im Bruch 3 - 63897 Miltenberg/Main").tolist()
-    # Search
-    results = collection.query(
-        query_embeddings=[query_embedding],
-        n_results=3  # Top 3 matches
+    # Semantic search (commented)
+    # query_embedding = model.encode("CPB Software (Germany) GmbH - Im Bruch 3 - 63897 Miltenberg/Main").tolist()
+    # results = collection.query(
+    #     query_embeddings=[query_embedding],
+    #     n_results=3
+    # )
+    
+    # Get specific file by ID
+    results = collection.get(
+        ids=["sample-invoice.pdf"]  # Replace with your filename
     )
-    print('found ids:',results['ids'])  # Matching filenames
-    print('found distances:',results['distances'])  # Similarity scores   
+    
+    # Show all extractable sections from results
+    print("\nAvailable result sections:")
+    print(f"  Keys: {results.keys()}")
+    print(f"\n  IDs: {results['ids']}")
+    print(f"\n  Documents: {results['documents']}")
+    print(f"\n  Metadatas: {results['metadatas']}")
+    
+    # Show individual file data
+    if results['ids']:
+        for i, (doc_id, document, metadata) in enumerate(zip(
+            results['ids'],
+            results['documents'],
+            results['metadatas']
+        ), 1):
+            print(f"\nFile {i}:")
+            print(f"  ID: {doc_id}")
+            print(f"  Metadata: {metadata}")
+            print(f"  Document preview: {document[:150]}...")
+    else:
+        print("\nFile not found in database")   
 
 def execute_extraction():
     test_directory = os.environ.get('TEST_DIRECTORY')

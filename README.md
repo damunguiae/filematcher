@@ -14,7 +14,7 @@ PDF text extraction and semantic search using vector embeddings.
 
 1. Create and activate virtual environment:
 ```bash
-python3 -m venv venv
+python3 -m vWenv venv
 source venv/bin/activate
 ```
 
