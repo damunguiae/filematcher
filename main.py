@@ -60,9 +60,8 @@ def execute_load(pdf_texts, embeddings):
     
     # Show all extractable sections from results
     print("\nAvailable result sections:")
-    print(f"  Keys: {results.keys()}")
+    print(f"  Keys: {list(results.keys())}")
     print(f"\n  IDs: {results['ids']}")
-    print(f"\n  Documents: {results['documents']}")
     print(f"\n  Metadatas: {results['metadatas']}")
     
     # Show individual file data
@@ -72,10 +71,14 @@ def execute_load(pdf_texts, embeddings):
             results['documents'],
             results['metadatas']
         ), 1):
-            print(f"\nFile {i}:")
-            print(f"  ID: {doc_id}")
-            print(f"  Metadata: {metadata}")
-            print(f"  Document preview: {document[:150]}...")
+            print(f"\n{'='*60}")
+            print(f"File {i}: {doc_id}")
+            print(f"{'='*60}")
+            print(f"Metadata: {metadata}")
+            print(f"\nDocument Content:")
+            print(f"{'-'*60}")
+            print(document)
+            print(f"{'-'*60}")
     else:
         print("\nFile not found in database")   
 
