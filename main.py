@@ -4,11 +4,57 @@ from sentence_transformers import SentenceTransformer
 import os
 from pathlib import Path
 import numpy as np
+import chromadb
 
 load_dotenv()
 
-# Load the embedding model (only ~80MB, no API key needed)
+# Load the embedding model
 model = SentenceTransformer('all-MiniLM-L6-v2')
+
+def execute_load(pdf_texts, embeddings):
+    # Creates local database in ./chroma_db folder
+    chroma_client = chromadb.PersistentClient(path="./chroma_db")
+    collection = chroma_client.get_or_create_collection(name="pdf_embeddings")
+    
+    # Get existing IDs in the database
+    existing_items = collection.get()
+    existing_ids = set(existing_items['ids']) if existing_items['ids'] else set()
+    
+    # Filter out files that already exist
+    new_ids = []
+    new_embeddings = []
+    new_documents = []
+    new_metadatas = []
+    
+    for filename in embeddings.keys():
+        if filename not in existing_ids:
+            new_ids.append(filename)
+            new_embeddings.append(embeddings[filename].tolist())
+            new_documents.append(pdf_texts[filename])
+            new_metadatas.append({"filename": filename})
+        else:
+            print(f"Skipping {filename} (already exists in database)")
+    
+    # Add only new embeddings to ChromaDB
+    if new_ids:
+        collection.add(
+            ids=new_ids,
+            embeddings=new_embeddings,
+            documents=new_documents,
+            metadatas=new_metadatas
+        )
+        print(f"Added {len(new_ids)} new embeddings to database")
+    else:
+        print("No new embeddings to add")
+    # Create query embedding
+    query_embedding = model.encode("CPB Software (Germany) GmbH - Im Bruch 3 - 63897 Miltenberg/Main").tolist()
+    # Search
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=3  # Top 3 matches
+    )
+    print('found ids:',results['ids'])  # Matching filenames
+    print('found distances:',results['distances'])  # Similarity scores   
 
 def execute_extraction():
     test_directory = os.environ.get('TEST_DIRECTORY')
@@ -105,3 +151,4 @@ def save_embeddings(embeddings, output_dir='./embeddings'):
 if __name__ == "__main__":
     texts, embeddings = execute_extraction()
     save_embeddings(embeddings)
+    execute_load(texts, embeddings)
